@@ -2,11 +2,11 @@
 
 import { cookies } from "next/headers";
 import { encode } from "next-auth/jwt";
-import { gql } from "@apollo/client";
+import { graphql } from "@/__generated__/gql";
 import { getClaims } from "@/lib/auth/session";
 import { getActionClient } from "@/lib/graphql-client";
 
-const PROVISION_WORKSPACE = gql`
+const PROVISION_WORKSPACE = graphql(`
   mutation ProvisionWorkspace($input: CreateWorkspaceInput!) {
     provisionWorkspace(input: $input) {
       id
@@ -14,9 +14,9 @@ const PROVISION_WORKSPACE = gql`
       token
     }
   }
-`;
+`);
 
-const SWITCH_WORKSPACE = gql`
+const SWITCH_WORKSPACE = graphql(`
   mutation SwitchWorkspace($input: SwitchWorkspaceInput!) {
     switchWorkspace(input: $input) {
       id
@@ -24,13 +24,7 @@ const SWITCH_WORKSPACE = gql`
       token
     }
   }
-`;
-
-interface WorkspaceAuthResult {
-  id: string;
-  name: string;
-  token: string;
-}
+`);
 
 async function updateSessionCookie(
   newToken: string,
@@ -74,9 +68,7 @@ export async function provisionWorkspace(
   name: string,
 ): Promise<{ name: string }> {
   const client = await getActionClient();
-  const { data } = await client.mutate<{
-    provisionWorkspace: WorkspaceAuthResult;
-  }>({
+  const { data } = await client.mutate({
     mutation: PROVISION_WORKSPACE,
     variables: { input: { name } },
   });
@@ -95,9 +87,7 @@ export async function switchWorkspace(
   workspaceId: string,
 ): Promise<{ name: string }> {
   const client = await getActionClient();
-  const { data } = await client.mutate<{
-    switchWorkspace: WorkspaceAuthResult;
-  }>({
+  const { data } = await client.mutate({
     mutation: SWITCH_WORKSPACE,
     variables: { input: { workspaceId } },
   });

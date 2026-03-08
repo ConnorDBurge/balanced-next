@@ -1,6 +1,6 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
-import { gql } from "@apollo/client";
+import { graphql } from "@/__generated__/gql";
 import { getClient } from "@/lib/graphql-client";
 import { getClaims } from "@/lib/auth/session";
 import {
@@ -11,7 +11,7 @@ import {
   type WorkspaceRole,
 } from "@/components/providers/workspace-provider";
 
-const SELF_QUERY = gql`
+const SELF_QUERY = graphql(`
   query Self {
     self {
       id
@@ -20,32 +20,17 @@ const SELF_QUERY = gql`
       familyName
     }
   }
-`;
+`);
 
-const WORKSPACES_QUERY = gql`
+const WORKSPACES_QUERY = graphql(`
   query Workspaces {
     workspaces {
       id
       name
+      status
     }
   }
-`;
-
-interface Self {
-  self: {
-    id: string;
-    email: string;
-    givenName: string;
-    familyName: string;
-  };
-}
-
-interface Workspaces {
-  workspaces: {
-    id: string;
-    name: string;
-  }[];
-}
+`);
 
 export default async function DashboardLayout({
   children,
@@ -59,8 +44,8 @@ export default async function DashboardLayout({
   const client = await getClient();
 
   const [{ data: userData }, { data: workspaceData }] = await Promise.all([
-    client.query<Self>({ query: SELF_QUERY }),
-    client.query<Workspaces>({ query: WORKSPACES_QUERY }),
+    client.query({ query: SELF_QUERY }),
+    client.query({ query: WORKSPACES_QUERY }),
   ]);
 
   const self = userData?.self;
@@ -72,7 +57,7 @@ export default async function DashboardLayout({
   const workspaces = workspaceData?.workspaces ?? [];
   const currentWorkspaceId = claims?.workspaceId ?? "";
   const currentWorkspace = workspaces.find(
-    (w: { id: string }) => w.id === currentWorkspaceId,
+    (w) => w.id === currentWorkspaceId,
   ) ?? { id: currentWorkspaceId, name: "Workspace" };
 
   async function handleSignOut() {
