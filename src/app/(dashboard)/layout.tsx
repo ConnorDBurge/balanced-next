@@ -31,7 +31,7 @@ const WORKSPACES_QUERY = gql`
   }
 `;
 
-interface SelfData {
+interface Self {
   self: {
     id: string;
     email: string;
@@ -40,7 +40,7 @@ interface SelfData {
   };
 }
 
-interface WorkspacesData {
+interface Workspaces {
   workspaces: {
     id: string;
     name: string;
@@ -59,8 +59,8 @@ export default async function DashboardLayout({
   const client = await getClient();
 
   const [{ data: userData }, { data: workspaceData }] = await Promise.all([
-    client.query<SelfData>({ query: SELF_QUERY }),
-    client.query<WorkspacesData>({ query: WORKSPACES_QUERY }),
+    client.query<Self>({ query: SELF_QUERY }),
+    client.query<Workspaces>({ query: WORKSPACES_QUERY }),
   ]);
 
   const self = userData?.self;
