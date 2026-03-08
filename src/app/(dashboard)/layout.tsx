@@ -10,6 +10,8 @@ import {
   WorkspaceProvider,
   type WorkspaceRole,
 } from "@/components/providers/workspace-provider";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar/app-sidebar";
 
 const SELF_QUERY = graphql(`
   query Self {
@@ -73,7 +75,12 @@ export default async function DashboardLayout({
         roles={(claims?.roles ?? []) as WorkspaceRole[]}
         userId={claims?.userId ?? ""}
       >
-        {children}
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <main className="flex-1 p-6">{children}</main>
+          </SidebarInset>
+        </SidebarProvider>
       </WorkspaceProvider>
     </UserProvider>
   );
