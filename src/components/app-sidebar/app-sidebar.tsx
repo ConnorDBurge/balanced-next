@@ -44,6 +44,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher/workspace-switcher";
+import { PersonalSettingsModal } from "@/components/personal-settings-modal/personal-settings-modal";
 import { useUser } from "@/components/providers/user-provider";
 
 const navItems = [
@@ -87,7 +88,7 @@ function NavItem({
             className={`size-5 shrink-0 ${isActive ? "text-foreground" : "text-muted-foreground"
               }`}
           />
-          <span className="text-sm transition-opacity duration-150 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
+          <span className="text-sm transition-[opacity,width] duration-150 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -100,6 +101,7 @@ export function AppSidebar() {
   const { toggleSidebar, state, isMobile, setOpenMobile } = useSidebar();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [personalSettingsOpen, setPersonalSettingsOpen] = useState(false);
   useEffect(() => setMounted(true), []);
   const currentTheme = mounted ? theme : undefined;
   const isCollapsed = state === "collapsed";
@@ -142,7 +144,7 @@ export function AppSidebar() {
         <div className="border-t border-sidebar-border group-data-[collapsible=icon]:border-transparent">
           <div
             className={`flex p-2 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCollapsed && !isMobile
-              ? "flex-col items-start gap-1"
+              ? "flex-col items-center gap-1"
               : "flex-row items-center gap-1"
               }`}
           >
@@ -226,7 +228,7 @@ export function AppSidebar() {
                 >
                   <div className="px-2 py-1.5 text-sm font-medium">{user.name}</div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setPersonalSettingsOpen(true)}>
                     <User className="mr-2 h-[18px] w-[18px] text-muted-foreground" />
                     Personal settings
                   </DropdownMenuItem>
@@ -267,6 +269,10 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
+      <PersonalSettingsModal
+        open={personalSettingsOpen}
+        onOpenChange={setPersonalSettingsOpen}
+      />
     </>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { useWorkspace } from "@/components/providers/workspace-provider";
 import { switchWorkspace } from "@/lib/actions/auth-actions";
+import { CreateWorkspaceModal } from "@/components/create-workspace-modal/create-workspace-modal";
 
 export function WorkspaceSwitcher() {
   const { workspace, workspaces } = useWorkspace();
@@ -19,6 +20,7 @@ export function WorkspaceSwitcher() {
   const [open, setOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [switched, setSwitched] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const prevWorkspaceId = useRef(currentWorkspaceId);
   const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -95,12 +97,18 @@ export function WorkspaceSwitcher() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-muted-foreground"
+          onSelect={() => setCreateOpen(true)}
         >
           <Plus className="size-4" />
           Create workspace
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <CreateWorkspaceModal
+      open={createOpen}
+      onOpenChange={setCreateOpen}
+      existingWorkspaces={workspaces}
+    />
     </>
   );
 }

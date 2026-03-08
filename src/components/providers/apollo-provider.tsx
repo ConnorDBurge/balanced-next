@@ -8,8 +8,15 @@ import {
 } from "@apollo/client-integration-nextjs";
 
 function makeClient() {
+  // Absolute URL required — relative URLs don't work during SSR.
+  // Browser requests go to the Next.js proxy route which adds auth headers.
+  const uri =
+    typeof window === "undefined"
+      ? `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/graphql`
+      : "/api/graphql";
+
   const httpLink = new HttpLink({
-    uri: "/api/graphql",
+    uri,
     fetchOptions: { cache: "no-store" },
   });
 
