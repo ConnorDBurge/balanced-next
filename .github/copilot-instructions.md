@@ -12,7 +12,18 @@ Every effort shall be made to render components on the server side. Default to R
 
 ### Server Actions Over API Routes
 
-Use `'use server'` functions (Next.js Server Actions) to communicate with the GraphQL backend. Do **not** create dedicated API route handlers (`app/api/`) unless there is a specific technical reason (e.g., webhooks, OAuth callbacks).
+Use `'use server'` functions (Next.js Server Actions) for mutations that need to update session cookies (e.g., workspace switching). Do **not** create dedicated API route handlers (`app/api/`) unless there is a specific technical reason (e.g., webhooks, OAuth callbacks).
+
+### GraphQL with Apollo Client
+
+Use **Apollo Client** with the `@apollo/client-integration-nextjs` package for all GraphQL communication. This supports both React Server Components and Client Components with SSR hydration.
+
+- **Server Components:** Use `getClient().query()` from `@apollo/client-integration-nextjs` for server-side data fetching.
+- **Client Components:** Use `useSuspenseQuery`, `useFragment`, and `useMutation` hooks for interactive data.
+- **`PreloadQuery`:** Preload data in server components and hydrate into client components to avoid waterfalls.
+- **Server Actions:** Use for mutations that require server-side cookie updates (e.g., workspace switching).
+
+See the [Apollo Next.js integration docs](https://www.apollographql.com/docs/react/integrations/nextjs) for full API reference.
 
 ### Component Reuse
 
@@ -24,9 +35,9 @@ Every effort to reuse components and share logic shall be made. Extract shared U
 
 ## Styling
 
-- **SCSS Modules** (`.module.scss`) — no Tailwind, no utility-class frameworks.
-- Component-scoped styles live next to their component file.
-- Global styles and variables go in `src/app/globals.scss`.
+- **Tailwind CSS** is the styling framework, used everywhere including ShadCN components and application code.
+- Global styles and ShadCN theme variables go in `src/app/globals.css`.
+- Use the `cn()` utility from `src/lib/utils.ts` for conditional class merging.
 
 ## State Management
 
