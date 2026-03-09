@@ -144,7 +144,7 @@ export function AppSidebar() {
         <div className="border-t border-sidebar-border group-data-[collapsible=icon]:border-transparent">
           <div
             className={`flex p-2 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${isCollapsed && !isMobile
-              ? "flex-col items-center gap-1"
+              ? "flex-col items-start gap-1"
               : "flex-row items-center gap-1"
               }`}
           >

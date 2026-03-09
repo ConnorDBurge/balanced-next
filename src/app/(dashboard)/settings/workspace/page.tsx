@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useLazyQuery, useMutation } from "@apollo/client/react";
+import { Form } from "@/components/ui/form";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -143,12 +144,6 @@ export default function WorkspaceSettingsPage() {
 
   const canSubmit = isDirty && !saving;
 
-  function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
-    if (e.key !== "Enter" || (!e.metaKey && !e.ctrlKey) || !canSubmit) return;
-    e.preventDefault();
-    e.currentTarget.requestSubmit();
-  }
-
   async function onSave(form: { name: string }) {
     setSaving(true);
     try {
@@ -243,14 +238,14 @@ export default function WorkspaceSettingsPage() {
       <div className="rounded-xl border border-border/50 bg-card/60 p-6 backdrop-blur-lg animate-in fade-in slide-in-from-bottom-2 duration-500">
         <h2 className="text-lg font-medium">General</h2>
         <p className="mt-1 text-sm text-muted-foreground">Manage your workspace settings.</p>
-        <form onSubmit={handleSubmit(onSave)} onKeyDown={handleFormKeyDown} className="mt-6 space-y-4">
+        <Form onSubmit={handleSubmit(onSave)} className="mt-6 space-y-4">
           <FormField control={control} name="name" label="Workspace name" disabled={saving} />
           <div className="flex justify-end">
             <Button type="submit" disabled={!canSubmit}>
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </div>
-        </form>
+        </Form>
       </div>
 
       <div className="rounded-xl border border-border/50 bg-card/60 p-6 backdrop-blur-lg animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150 fill-mode-backwards">

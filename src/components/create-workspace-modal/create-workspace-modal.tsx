@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { successToast } from "@/lib/toast";
 import { provisionWorkspace } from "@/lib/actions/auth-actions";
 import {
@@ -12,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { FormField } from "@/components/ui/form-field";
 
 interface Workspace {
@@ -27,6 +29,7 @@ interface CreateWorkspaceModalProps {
 }
 
 export function CreateWorkspaceModal({ open, onOpenChange, existingWorkspaces, onSuccess }: CreateWorkspaceModalProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,12 +42,6 @@ export function CreateWorkspaceModal({ open, onOpenChange, existingWorkspaces, o
     existingWorkspaces.some((w) => w.name.toLowerCase() === name.trim().toLowerCase());
   const canSubmit = !!name.trim() && !isDuplicate && !loading;
 
-  function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
-    if (e.key !== "Enter" || (!e.metaKey && !e.ctrlKey) || !canSubmit) return;
-    e.preventDefault();
-    e.currentTarget.requestSubmit();
-  }
-
   async function onSubmit(form: { name: string }) {
     if (!form.name.trim() || isDuplicate) return;
 
@@ -55,8 +52,8 @@ export function CreateWorkspaceModal({ open, onOpenChange, existingWorkspaces, o
       await provisionWorkspace(form.name.trim());
       handleOpenChange(false);
       onSuccess?.();
+      router.refresh();
       successToast("Workspace created");
-      window.location.reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -77,7 +74,7 @@ export function CreateWorkspaceModal({ open, onOpenChange, existingWorkspaces, o
         <DialogHeader>
           <DialogTitle>Create workspace</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleFormKeyDown}>
+        <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="py-4">
             <FormField
               control={control}
@@ -101,7 +98,7 @@ export function CreateWorkspaceModal({ open, onOpenChange, existingWorkspaces, o
               {loading ? "Creating…" : "Create workspace"}
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

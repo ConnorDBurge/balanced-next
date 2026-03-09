@@ -9,6 +9,7 @@ import { useMutation, useLazyQuery } from "@apollo/client/react";
 import { Check, Loader2, Monitor, Moon, Sun, User, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
 import { FormField } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TabbedDialog } from "@/components/ui/tabbed-dialog";
@@ -96,12 +97,6 @@ export function PersonalSettingsModal({ open, onOpenChange }: PersonalSettingsMo
 
   const canSubmit = isDirty && !saving;
 
-  function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
-    if (e.key !== "Enter" || (!e.metaKey && !e.ctrlKey) || !canSubmit) return;
-    e.preventDefault();
-    e.currentTarget.requestSubmit();
-  }
-
   async function onSubmit(form: { givenName: string; familyName: string; email: string }) {
     setSaving(true);
     setSaveIndicator("saving");
@@ -153,7 +148,7 @@ export function PersonalSettingsModal({ open, onOpenChange }: PersonalSettingsMo
     </div>
   ) : (
     <div className="space-y-6 pt-2">
-      <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleFormKeyDown} className="space-y-4">
+      <Form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={control} name="givenName" label="First name" disabled={saving} />
         <FormField control={control} name="familyName" label="Last name" disabled={saving} />
         <FormField control={control} name="email" label="Email" type="email" disabled={saving} />
@@ -168,7 +163,7 @@ export function PersonalSettingsModal({ open, onOpenChange }: PersonalSettingsMo
             {saving ? "Saving…" : "Save changes"}
           </Button>
         </div>
-      </form>
+      </Form>
 
       <div className="rounded-lg border border-red-500/20 p-4">
         <div className="flex items-center justify-between gap-4">
