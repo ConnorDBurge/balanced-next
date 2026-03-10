@@ -16,6 +16,7 @@ interface LabeledFilterProps {
   onValueChange: (value: string) => void;
   options: LabeledFilterOption[];
   testId?: string;
+  labelPosition?: "inside" | "outside";
 }
 
 export function LabeledFilter({
@@ -24,26 +25,46 @@ export function LabeledFilter({
   onValueChange,
   options,
   testId,
+  labelPosition = "inside",
 }: LabeledFilterProps) {
   const selectedLabel = options.find((o) => o.value === value)?.label;
 
+  const selectContent = (
+    <SelectContent position="popper" align="end">
+      {options.map((opt) => (
+        <SelectItem key={opt.value} value={opt.value}>
+          {opt.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  );
+
+  if (labelPosition === "inside") {
+    return (
+      <Select value={value} onValueChange={onValueChange}>
+        <SelectTrigger
+          className="h-9 gap-2 border-border px-3 text-sm shadow-none cursor-pointer"
+          data-testid={testId}
+        >
+          <span className="text-muted-foreground whitespace-nowrap">{label}:</span>
+          <span className="font-medium">{selectedLabel}</span>
+        </SelectTrigger>
+        {selectContent}
+      </Select>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2 rounded-md border border-border px-3 h-9">
+    <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground whitespace-nowrap">{label}:</span>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger
-          className="w-auto border-0 bg-transparent shadow-none h-auto px-0 py-0 text-sm font-medium dark:bg-transparent dark:hover:bg-transparent cursor-pointer"
+          className="h-9 border-border px-3 text-sm font-medium shadow-none cursor-pointer"
           data-testid={testId}
         >
           <span>{selectedLabel}</span>
         </SelectTrigger>
-        <SelectContent position="popper" align="end">
-          {options.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value} >
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
+        {selectContent}
       </Select>
     </div>
   );

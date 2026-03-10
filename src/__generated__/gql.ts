@@ -14,10 +14,12 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.AccountsDocument,
+    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      bankConnectionId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.AccountsDocument,
     "\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.CreateAccountDocument,
     "\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.UpdateAccountDocument,
     "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n": typeof types.DeleteAccountDocument,
+    "\n  query BankConnections {\n    bankConnections {\n      id\n      institutionName\n      status\n      lastSyncedAt\n    }\n  }\n": typeof types.BankConnectionsDocument,
+    "\n  mutation SyncTransactions($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      transactionsModified\n      transactionsRemoved\n      accountsSynced\n    }\n  }\n": typeof types.SyncTransactionsDocument,
     "\n  query Self {\n    self {\n      id\n      email\n      givenName\n      familyName\n    }\n  }\n": typeof types.SelfDocument,
     "\n  query Workspaces {\n    workspaces {\n      id\n      name\n      status\n    }\n  }\n": typeof types.WorkspacesDocument,
     "\n  query CurrentWorkspace {\n    currentWorkspace {\n      id\n      name\n    }\n  }\n": typeof types.CurrentWorkspaceDocument,
@@ -25,6 +27,8 @@ type Documents = {
     "\n  mutation UpdateCurrentWorkspace($input: UpdateWorkspaceInput!) {\n    updateCurrentWorkspace(input: $input) {\n      id\n      name\n    }\n  }\n": typeof types.UpdateCurrentWorkspaceDocument,
     "\n  mutation UpdateWorkspaceMember($userId: ID!, $input: UpdateMembershipInput!) {\n    updateWorkspaceMember(userId: $userId, input: $input) {\n      userId\n      roles\n    }\n  }\n": typeof types.UpdateWorkspaceMemberDocument,
     "\n  mutation RemoveWorkspaceMember($userId: ID!) {\n    removeWorkspaceMember(userId: $userId)\n  }\n": typeof types.RemoveWorkspaceMemberDocument,
+    "\n  mutation LinkBank($input: LinkBankInput!) {\n    linkBank(input: $input) {\n      id\n      institutionName\n      status\n    }\n  }\n": typeof types.LinkBankDocument,
+    "\n  mutation SyncTransactionsAfterLink($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      accountsSynced\n    }\n  }\n": typeof types.SyncTransactionsAfterLinkDocument,
     "\n  query PersonalSettingsSelf {\n    self {\n      id\n      givenName\n      familyName\n      email\n    }\n  }\n": typeof types.PersonalSettingsSelfDocument,
     "\n  mutation UpdateSelf($input: UpdateUserInput!) {\n    updateSelf(input: $input) {\n      id\n      givenName\n      familyName\n      email\n    }\n  }\n": typeof types.UpdateSelfDocument,
     "\n  mutation DeleteSelf {\n    deleteSelf\n  }\n": typeof types.DeleteSelfDocument,
@@ -32,10 +36,12 @@ type Documents = {
     "\n  mutation SwitchWorkspace($input: SwitchWorkspaceInput!) {\n    switchWorkspace(input: $input) {\n      id\n      name\n      token\n    }\n  }\n": typeof types.SwitchWorkspaceDocument,
 };
 const documents: Documents = {
-    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.AccountsDocument,
+    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      bankConnectionId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.AccountsDocument,
     "\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.CreateAccountDocument,
     "\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.UpdateAccountDocument,
     "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n": types.DeleteAccountDocument,
+    "\n  query BankConnections {\n    bankConnections {\n      id\n      institutionName\n      status\n      lastSyncedAt\n    }\n  }\n": types.BankConnectionsDocument,
+    "\n  mutation SyncTransactions($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      transactionsModified\n      transactionsRemoved\n      accountsSynced\n    }\n  }\n": types.SyncTransactionsDocument,
     "\n  query Self {\n    self {\n      id\n      email\n      givenName\n      familyName\n    }\n  }\n": types.SelfDocument,
     "\n  query Workspaces {\n    workspaces {\n      id\n      name\n      status\n    }\n  }\n": types.WorkspacesDocument,
     "\n  query CurrentWorkspace {\n    currentWorkspace {\n      id\n      name\n    }\n  }\n": types.CurrentWorkspaceDocument,
@@ -43,6 +49,8 @@ const documents: Documents = {
     "\n  mutation UpdateCurrentWorkspace($input: UpdateWorkspaceInput!) {\n    updateCurrentWorkspace(input: $input) {\n      id\n      name\n    }\n  }\n": types.UpdateCurrentWorkspaceDocument,
     "\n  mutation UpdateWorkspaceMember($userId: ID!, $input: UpdateMembershipInput!) {\n    updateWorkspaceMember(userId: $userId, input: $input) {\n      userId\n      roles\n    }\n  }\n": types.UpdateWorkspaceMemberDocument,
     "\n  mutation RemoveWorkspaceMember($userId: ID!) {\n    removeWorkspaceMember(userId: $userId)\n  }\n": types.RemoveWorkspaceMemberDocument,
+    "\n  mutation LinkBank($input: LinkBankInput!) {\n    linkBank(input: $input) {\n      id\n      institutionName\n      status\n    }\n  }\n": types.LinkBankDocument,
+    "\n  mutation SyncTransactionsAfterLink($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      accountsSynced\n    }\n  }\n": types.SyncTransactionsAfterLinkDocument,
     "\n  query PersonalSettingsSelf {\n    self {\n      id\n      givenName\n      familyName\n      email\n    }\n  }\n": types.PersonalSettingsSelfDocument,
     "\n  mutation UpdateSelf($input: UpdateUserInput!) {\n    updateSelf(input: $input) {\n      id\n      givenName\n      familyName\n      email\n    }\n  }\n": types.UpdateSelfDocument,
     "\n  mutation DeleteSelf {\n    deleteSelf\n  }\n": types.DeleteSelfDocument,
@@ -67,7 +75,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"];
+export function graphql(source: "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      bankConnectionId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      bankConnectionId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -80,6 +88,14 @@ export function graphql(source: "\n  mutation UpdateAccount($accountId: ID!, $in
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n"): (typeof documents)["\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query BankConnections {\n    bankConnections {\n      id\n      institutionName\n      status\n      lastSyncedAt\n    }\n  }\n"): (typeof documents)["\n  query BankConnections {\n    bankConnections {\n      id\n      institutionName\n      status\n      lastSyncedAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SyncTransactions($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      transactionsModified\n      transactionsRemoved\n      accountsSynced\n    }\n  }\n"): (typeof documents)["\n  mutation SyncTransactions($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      transactionsModified\n      transactionsRemoved\n      accountsSynced\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -108,6 +124,14 @@ export function graphql(source: "\n  mutation UpdateWorkspaceMember($userId: ID!
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation RemoveWorkspaceMember($userId: ID!) {\n    removeWorkspaceMember(userId: $userId)\n  }\n"): (typeof documents)["\n  mutation RemoveWorkspaceMember($userId: ID!) {\n    removeWorkspaceMember(userId: $userId)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation LinkBank($input: LinkBankInput!) {\n    linkBank(input: $input) {\n      id\n      institutionName\n      status\n    }\n  }\n"): (typeof documents)["\n  mutation LinkBank($input: LinkBankInput!) {\n    linkBank(input: $input) {\n      id\n      institutionName\n      status\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SyncTransactionsAfterLink($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      accountsSynced\n    }\n  }\n"): (typeof documents)["\n  mutation SyncTransactionsAfterLink($bankConnectionId: ID!) {\n    syncTransactions(bankConnectionId: $bankConnectionId) {\n      transactionsAdded\n      accountsSynced\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -21,7 +21,7 @@ export function ConfirmAction({
 }: ConfirmActionProps) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-200 flex flex-col gap-2 pt-2">
-      <p className="text-sm text-muted-foreground text-center">{message}</p>
+      <p className="cursor-default text-sm text-muted-foreground text-center">{message}</p>
       <div className="flex gap-2">
         <Button
           variant="ghost"

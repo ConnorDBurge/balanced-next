@@ -84,6 +84,7 @@ export interface Account {
   balanceLastUpdated: string | null;
   closedAt: string | null;
   externalId: string | null;
+  bankConnectionId: string | null;
   createdAt: string;
   updatedAt: string;
 }

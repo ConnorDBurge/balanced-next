@@ -1,67 +1,48 @@
 import { toast } from "sonner";
 import { createElement } from "react";
-import { CircleCheck, CircleX } from "lucide-react";
+import { CircleCheck, CircleX, TriangleAlert, Info } from "lucide-react";
 
-function formatTimestamp(): string {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "2-digit",
-    year: "numeric",
-  }) + " at " + new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function makeToast(
+  icon: Parameters<typeof createElement>[0],
+  iconClass: string,
+  panelClass: string,
+  borderClass: string,
+  message: string,
+) {
+  toast.custom(
+    () =>
+      createElement(
+        "div",
+        {
+          className: `rounded-lg border ${borderClass} bg-white dark:bg-zinc-900 shadow-lg flex items-stretch min-w-[320px] max-w-[420px] overflow-hidden`,
+        },
+        createElement(
+          "div",
+          { className: `flex items-center justify-center px-4 ${panelClass}` },
+          createElement(icon as string, { className: `size-6 ${iconClass}` })
+        ),
+        createElement(
+          "div",
+          { className: "flex items-center px-4 py-3.5" },
+          createElement("span", { className: "text-sm font-semibold text-gray-900 dark:text-gray-100" }, message)
+        )
+      ),
+    { duration: 5000 }
+  );
 }
 
 export function successToast(message: string) {
-  const timestamp = formatTimestamp();
-  toast.custom(
-    () =>
-      createElement(
-        "div",
-        {
-          className:
-            "relative overflow-hidden rounded-lg bg-emerald-500 border border-emerald-400 text-white px-4 py-3 shadow-lg flex items-start gap-2 min-w-[280px]",
-        },
-        createElement(CircleCheck, { className: "size-4 text-white shrink-0 mt-0.5" }),
-        createElement(
-          "div",
-          { className: "flex flex-col" },
-          createElement("span", { className: "text-sm font-medium" }, message),
-          createElement("span", { className: "text-xs text-emerald-100" }, timestamp)
-        ),
-        createElement("div", {
-          className: "absolute bottom-0 left-0 h-1 bg-emerald-300 rounded-b-lg",
-          style: { animation: "toast-progress 5s linear forwards" },
-        })
-      ),
-    { duration: 5000 }
-  );
+  makeToast(CircleCheck, "text-emerald-500", "bg-emerald-500/15", "border-emerald-500", message);
 }
 
 export function errorToast(message: string) {
-  const timestamp = formatTimestamp();
-  toast.custom(
-    () =>
-      createElement(
-        "div",
-        {
-          className:
-            "relative overflow-hidden rounded-lg bg-red-700 border border-red-600 text-white px-4 py-3 shadow-lg flex items-start gap-2 min-w-[280px]",
-        },
-        createElement(CircleX, { className: "size-4 text-red-200 shrink-0 mt-0.5" }),
-        createElement(
-          "div",
-          { className: "flex flex-col" },
-          createElement("span", { className: "text-sm font-medium" }, message),
-          createElement("span", { className: "text-xs text-red-300/80" }, timestamp)
-        ),
-        createElement("div", {
-          className: "absolute bottom-0 left-0 h-1 bg-red-400 rounded-b-lg",
-          style: { animation: "toast-progress 5s linear forwards" },
-        })
-      ),
-    { duration: 5000 }
-  );
+  makeToast(CircleX, "text-red-500", "bg-red-500/15", "border-red-500", message);
+}
+
+export function warningToast(message: string) {
+  makeToast(TriangleAlert, "text-amber-500", "bg-amber-500/15", "border-amber-500", message);
+}
+
+export function infoToast(message: string) {
+  makeToast(Info, "text-blue-500", "bg-blue-500/15", "border-blue-500", message);
 }

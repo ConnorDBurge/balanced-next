@@ -15,10 +15,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { graphql } from "@/__generated__/gql";
 import { STATUS_DOT_COLORS, TYPE_DOT_COLORS } from "@/lib/account-colors";
 import { accountFormDefaults, accountFormSchema, type AccountFormValues } from "@/lib/schemas/account-schema";
 import { errorToast, successToast } from "@/lib/toast";
 import { formatRelativeDate } from "@/lib/utils";
+import { useTellerConnect } from "@/hooks/use-teller-connect";
 import {
   ALL_ACCOUNT_TYPES,
   Account,
@@ -33,10 +35,30 @@ import {
   getSubTypeLabel,
   getTypeLabel
 } from "@/types/account";
+import { useMutation } from "@apollo/client/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Pencil } from "lucide-react";
+import { ArrowRight, Building2, Pencil, PenLine, RefreshCw, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+
+const LINK_BANK_MUTATION = graphql(`
+  mutation LinkBank($input: LinkBankInput!) {
+    linkBank(input: $input) {
+      id
+      institutionName
+      status
+    }
+  }
+`);
+
+const SYNC_TRANSACTIONS_MUTATION = graphql(`
+  mutation SyncTransactionsAfterLink($bankConnectionId: ID!) {
+    syncTransactions(bankConnectionId: $bankConnectionId) {
+      transactionsAdded
+      accountsSynced
+    }
+  }
+`);
 
 const CURRENCIES: CurrencyCode[] = ["USD"];
 
@@ -66,9 +88,11 @@ interface AccountDialogProps {
   existingNames?: string[];
   onSave: (data: CreateAccountPayload | UpdateAccountPayload) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onConnect?: () => void;
+  onSync?: () => Promise<void>;
 }
 
-export function AccountDialog({ open, onOpenChange, account, existingNames = [], onSave, onDelete }: AccountDialogProps) {
+export function AccountDialog({ open, onOpenChange, account, existingNames = [], onSave, onDelete, onConnect, onSync }: AccountDialogProps) {
   const isEdit = !!account;
 
   // RHF manages all form fields
@@ -77,15 +101,24 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
     defaultValues: accountFormDefaults,
   });
 
+  // Create mode: top-level mode gate
+  const [mode, setMode] = useState<"choose" | "manual">("choose");
+
   // Wizard flow state (create mode only)
   const [typeSelected, setTypeSelected] = useState(false);
   const [subTypeSelected, setSubTypeSelected] = useState(false);
 
   // UI interaction state
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editingBalance, setEditingBalance] = useState(false);
+
+  const teller = useTellerConnect();
+  const [linkBank] = useMutation(LINK_BANK_MUTATION);
+  const [syncTransactions] = useMutation(SYNC_TRANSACTIONS_MUTATION);
 
   // Watch form values for computed properties
   const name = watch("name");
@@ -120,6 +153,7 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
       setConfirmingDelete(false);
     } else if (open && !account) {
       reset(accountFormDefaults);
+      setMode("choose");
       setTypeSelected(false);
       setSubTypeSelected(false);
     }
@@ -254,7 +288,10 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Status</p>
-                  <p className={`font-medium ${STATUS_DOT_COLORS[status]}`}>{getStatusLabel(status)}</p>
+                  <p className={`font-medium flex items-center gap-1.5 ${STATUS_DOT_COLORS[status]}`}>
+                    {getStatusLabel(status)}
+                    {account!.source !== "MANUAL" && <Zap className="size-3.5" />}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Source</p>
@@ -276,7 +313,7 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
             {/* BALANCE */}
             <SectionCard
               title="Balance"
-              headerAction={!editingBalance ? (
+              headerAction={account!.source === "MANUAL" && !editingBalance ? (
                 <button
                   type="button"
                   className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -285,9 +322,30 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
                 >
                   <Pencil className="size-3.5" />
                 </button>
+              ) : account!.source !== "MANUAL" && onSync ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    setSyncing(true);
+                    try {
+                      await onSync();
+                      successToast("Account synced");
+                    } catch {
+                      errorToast("Sync failed");
+                    } finally {
+                      setSyncing(false);
+                    }
+                  }}
+                  disabled={syncing || saving}
+                >
+                  <RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} />
+                  {syncing ? "Syncing…" : "Sync Now"}
+                </Button>
               ) : undefined}
             >
-              {editingBalance && (
+              {account!.source === "MANUAL" && editingBalance && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Starting Balance</p>
                   <CurrencyInput
@@ -305,6 +363,9 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
                   <p className="text-lg font-semibold tabular-nums">
                     {formatBalance(account!.balance, account!.currency)}
                   </p>
+                  {account!.source !== "MANUAL" && syncing && (
+                    <RefreshCw className="text-primary animate-spin" size={18} strokeWidth={2.5} style={{ animationDuration: "3s" }} />
+                  )}
                   {editingBalance && signedBalanceStr !== (account!.startingBalance?.toString() ?? "") && (
                     <span className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
                       <ArrowRight className="size-4 text-muted-foreground" />
@@ -439,6 +500,36 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
   // Create mode → single-pane progressive flow
   const detailsReady = typeSelected && subTypeSelected;
 
+  function handleConnectBank() {
+    teller.open({
+      onSuccess: async (enrollment) => {
+        setLinking(true);
+        try {
+          const result = await linkBank({
+            variables: { input: { accessToken: enrollment.accessToken } },
+            errorPolicy: "all",
+          });
+          if (result.data?.linkBank) {
+            await syncTransactions({ variables: { bankConnectionId: result.data.linkBank.id } });
+            onConnect?.();
+            successToast(`Connected to ${result.data.linkBank.institutionName ?? enrollment.institution.name}`);
+            onOpenChange(false);
+          } else {
+            errorToast("Failed to link bank account");
+          }
+        } catch {
+          errorToast("Failed to link bank account");
+        } finally {
+          setLinking(false);
+        }
+      },
+      onExit: () => {},
+      onFailure: () => {
+        errorToast("Bank connection failed");
+      },
+    });
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -455,104 +546,165 @@ export function AccountDialog({ open, onOpenChange, account, existingNames = [],
         </SheetHeader>
 
         <div className="flex flex-col gap-4 px-4 pb-4 flex-1 overflow-y-auto">
-          {/* Type + Subtype selection (or collapsed summary) */}
-          {detailsReady ? (
-            <button
-              type="button"
-              className="rounded-lg border border-border px-4 py-3 flex items-center justify-between text-sm text-left cursor-pointer hover:bg-muted/50 transition-colors animate-in fade-in duration-300"
-              onClick={() => { setSubTypeSelected(false); setTypeSelected(false); }}
-            >
-              <span className="flex items-center gap-2">
-                <span className={`size-2.5 rounded-full shrink-0 ${TYPE_DOT_COLORS[type]}`} />
-                <span className="font-medium">{getTypeLabel(type)}</span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">{getSubTypeLabel(subType)}</span>
-              </span>
-              <span className="text-xs text-muted-foreground">Change</span>
-            </button>
-          ) : (
-            <>
-              <RadioList
-                title="What type of account is this?"
-                options={ALL_ACCOUNT_TYPES.map((t) => ({ value: t, label: getTypeLabel(t) }))}
-                value={typeSelected ? type : undefined}
-                onChange={(v) => { setValue("type", v as AccountType); setTypeSelected(true); setSubTypeSelected(false); setValue("subType", SUB_TYPES_BY_TYPE[v as AccountType][0]); }}
-              />
+          {/* Mode selection — choose between bank link or manual */}
+          {mode === "choose" && (
+            <div className="flex flex-col gap-3 animate-in fade-in duration-200">
+              <button
+                type="button"
+                disabled={linking}
+                onClick={handleConnectBank}
+                className="rounded-lg border border-border px-4 py-4 flex items-center justify-between text-left cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="flex items-center gap-3">
+                  <Building2 className="size-5 text-muted-foreground shrink-0" />
+                  <span className="flex flex-col">
+                    <span className="font-medium text-sm">Connect a bank automatically</span>
+                    <span className="text-xs text-muted-foreground">Sync balances &amp; transactions</span>
+                  </span>
+                </span>
+                <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
 
-              {typeSelected && (
-                <RadioList
-                  title={`What type of ${getTypeLabel(type).toLowerCase()} is this?`}
-                  options={allowedSubTypes.map((st) => ({ value: st, label: getSubTypeLabel(st) }))}
-                  onChange={(v) => { setValue("subType", v as AccountSubType); setSubTypeSelected(true); }}
-                  className="animate-in fade-in slide-in-from-top-2 duration-200"
-                />
-              )}
-            </>
+              <div className="rounded-md bg-muted/40 border border-border px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
+                Connecting your bank imports all associated accounts — checking, savings, and credit cards — and keeps balances &amp; transactions in sync automatically.
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-xs text-muted-foreground">or add manually</span>
+                <div className="flex-1 border-t border-border" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMode("manual")}
+                className="rounded-lg border border-border px-4 py-4 flex items-center justify-between text-left cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                <span className="flex items-center gap-3">
+                  <PenLine className="size-5 text-muted-foreground shrink-0" />
+                  <span className="flex flex-col">
+                    <span className="font-medium text-sm">Add manually</span>
+                    <span className="text-xs text-muted-foreground">Checking, savings, investment...</span>
+                  </span>
+                </span>
+                <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+
+              <div className="rounded-md bg-muted/40 border border-border px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
+                Manually-managed accounts let you track any asset or liability. Enter a starting balance and add transactions yourself, or import them later via CSV.
+              </div>
+            </div>
           )}
 
-          {/* Account details — shown after type+subtype selected */}
-          {detailsReady && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <SectionCard>
-                <FormField
-                  control={control}
-                  name="name"
-                  id="create-name"
-                  label="Account Name"
-                  placeholder="e.g. Chase Checking"
-                  maxLength={120}
-                  error={nameTaken ? "An account with this name already exists." : undefined}
-                />
+          {/* Manual wizard */}
+          {mode === "manual" && (
+            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+              {detailsReady ? (
+                <button
+                  type="button"
+                  className="rounded-lg border border-border px-4 py-3 flex items-center justify-between text-sm text-left cursor-pointer hover:bg-muted/50 transition-colors animate-in fade-in duration-300"
+                  onClick={() => { setSubTypeSelected(false); setTypeSelected(false); }}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`size-2.5 rounded-full shrink-0 ${TYPE_DOT_COLORS[type]}`} />
+                    <span className="font-medium">{getTypeLabel(type)}</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">{getSubTypeLabel(subType)}</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">Change</span>
+                </button>
+              ) : (
+                <>
+                  <RadioList
+                    title="What type of account is this?"
+                    options={ALL_ACCOUNT_TYPES.map((t) => ({ value: t, label: getTypeLabel(t) }))}
+                    value={typeSelected ? type : undefined}
+                    onChange={(v) => { setValue("type", v as AccountType); setTypeSelected(true); setSubTypeSelected(false); setValue("subType", SUB_TYPES_BY_TYPE[v as AccountType][0]); }}
+                  />
 
-                <FormField
-                  control={control}
-                  name="institutionName"
-                  id="create-institution"
-                  label="Institution Name"
-                  placeholder="e.g. Chase, Vanguard"
-                  maxLength={120}
-                  optional
-                />
-              </SectionCard>
+                  {typeSelected && (
+                    <RadioList
+                      title={`What type of ${getTypeLabel(type).toLowerCase()} is this?`}
+                      options={allowedSubTypes.map((st) => ({ value: st, label: getSubTypeLabel(st) }))}
+                      onChange={(v) => { setValue("subType", v as AccountSubType); setSubTypeSelected(true); }}
+                      className="animate-in fade-in slide-in-from-top-2 duration-200"
+                    />
+                  )}
+                </>
+              )}
 
-              <SectionCard>
-                <div>
-                  <h3 className="text-sm font-medium mb-1">
-                    Starting Balance
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    This will be used as the starting balance for your account. Future transactions will adjust it. If you&apos;re not sure, an estimation will suffice.
-                  </p>
+              {detailsReady && (
+                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <SectionCard>
+                    <FormField
+                      control={control}
+                      name="name"
+                      id="create-name"
+                      label="Account Name"
+                      placeholder="e.g. Chase Checking"
+                      maxLength={120}
+                      error={nameTaken ? "An account with this name already exists." : undefined}
+                    />
+
+                    <FormField
+                      control={control}
+                      name="institutionName"
+                      id="create-institution"
+                      label="Institution Name"
+                      placeholder="e.g. Chase, Vanguard"
+                      maxLength={120}
+                      optional
+                    />
+                  </SectionCard>
+
+                  <SectionCard>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">
+                        Starting Balance
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        This will be used as the starting balance for your account. Future transactions will adjust it. If you&apos;re not sure, an estimation will suffice.
+                      </p>
+                    </div>
+
+                    {getBalanceHelpText(type) && (
+                      <div className="rounded-md bg-muted/40 border border-border p-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {getBalanceHelpText(type)}
+                        </p>
+                      </div>
+                    )}
+
+                    <CurrencyInput
+                      control={control}
+                      name="startingBalance"
+                      signName="balanceSign"
+                      currencyName="currency"
+                      currencies={CURRENCIES}
+                    />
+                  </SectionCard>
                 </div>
-
-                {getBalanceHelpText(type) && (
-                  <div className="rounded-md bg-muted/40 border border-border p-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {getBalanceHelpText(type)}
-                    </p>
-                  </div>
-                )}
-
-                <CurrencyInput
-                  control={control}
-                  name="startingBalance"
-                  signName="balanceSign"
-                  currencyName="currency"
-                  currencies={CURRENCIES}
-                />
-              </SectionCard>
+              )}
             </div>
           )}
         </div>
 
         <SheetFooter className="px-4 py-3">
           <div className="flex w-full items-center justify-between">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
-              Close
-            </Button>
-            <Button onClick={handleSubmit(onSubmit)} disabled={saving || !detailsReady || !name.trim() || nameTaken}>
-              {saving ? "Saving…" : "Save & Close"}
-            </Button>
+            {mode === "choose" ? (
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={linking}>
+                Close
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => setMode("choose")} disabled={saving}>
+                  Back
+                </Button>
+                <Button onClick={handleSubmit(onSubmit)} disabled={saving || !detailsReady || !name.trim() || nameTaken}>
+                  {saving ? "Saving…" : "Save & Close"}
+                </Button>
+              </>
+            )}
           </div>
         </SheetFooter>
       </SheetContent>

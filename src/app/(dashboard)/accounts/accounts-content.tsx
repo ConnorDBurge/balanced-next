@@ -33,9 +33,10 @@ import {
   CreateAccountInput,
   UpdateAccountInput,
 } from "@/__generated__/graphql";
-import { useMutation, useQuery } from "@apollo/client/react";
+import { successToast } from "@/lib/toast";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import { type ColumnDef } from "@tanstack/react-table";
-import { Landmark, Plus, Search } from "lucide-react";
+import { Landmark, Plus, RefreshCw, Search, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
@@ -55,6 +56,7 @@ const ACCOUNTS_QUERY = graphql(`
       startingBalance
       closedAt
       externalId
+      bankConnectionId
       createdAt
       updatedAt
       workspaceId
@@ -114,6 +116,28 @@ const DELETE_ACCOUNT_MUTATION = graphql(`
   }
 `);
 
+const BANK_CONNECTIONS_QUERY = graphql(`
+  query BankConnections {
+    bankConnections {
+      id
+      institutionName
+      status
+      lastSyncedAt
+    }
+  }
+`);
+
+const SYNC_TRANSACTIONS_MUTATION = graphql(`
+  mutation SyncTransactions($bankConnectionId: ID!) {
+    syncTransactions(bankConnectionId: $bankConnectionId) {
+      transactionsAdded
+      transactionsModified
+      transactionsRemoved
+      accountsSynced
+    }
+  }
+`);
+
 const GROUP_BY_OPTIONS: { value: GroupBy; label: string }[] = [
   { value: "type", label: "Type" },
   { value: "institution", label: "Institution" },
@@ -165,17 +189,6 @@ const columns: ColumnDef<Account, unknown>[] = [
     ),
   },
   {
-    id: "balance",
-    accessorKey: "balance",
-    header: "Balance",
-    meta: {
-      width: "20%",
-      headerClassName: "text-right justify-end",
-      cellClassName: "text-right font-mono tabular-nums",
-    },
-    cell: ({ row }) => formatBalance(row.original.balance, row.original.currency),
-  },
-  {
     id: "lastUpdated",
     accessorFn: (row) => (row.balanceLastUpdated ? new Date(row.balanceLastUpdated).getTime() : 0),
     header: "Last Updated",
@@ -190,6 +203,7 @@ const columns: ColumnDef<Account, unknown>[] = [
     cell: ({ row }) => (
       <span className={`inline-flex items-center gap-1.5 font-medium ${STATUS_COLORS[row.original.status] ?? "text-muted-foreground"}`}>
         {getStatusLabel(row.original.status)}
+        {row.original.source !== "MANUAL" && <Zap className="size-3.5" />}
       </span>
     ),
   },
@@ -228,14 +242,43 @@ export function AccountsContent() {
   const [groupBy, setGroupBy] = useState<GroupBy>("type");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const { data, loading, refetch } = useQuery(ACCOUNTS_QUERY);
   const [createAccount] = useMutation(CREATE_ACCOUNT_MUTATION);
   const [updateAccount] = useMutation(UPDATE_ACCOUNT_MUTATION);
   const [deleteAccount] = useMutation(DELETE_ACCOUNT_MUTATION);
+  const [syncTransactions] = useMutation(SYNC_TRANSACTIONS_MUTATION);
+  const [fetchBankConnections] = useLazyQuery(BANK_CONNECTIONS_QUERY, { fetchPolicy: "network-only" });
 
   const accounts = useMemo(() => (data?.accounts ?? []) as Account[], [data]);
   const accountNames = useMemo(() => accounts.map((a) => a.name), [accounts]);
+  const hasAutoAccounts = useMemo(() => accounts.some((a) => a.source !== "MANUAL"), [accounts]);
+
+  const balanceColumn = useMemo<ColumnDef<Account, unknown>>(() => ({
+    id: "balance",
+    accessorKey: "balance",
+    header: "Balance",
+    meta: {
+      width: "20%",
+      headerClassName: "text-right justify-end",
+      cellClassName: "text-right font-mono tabular-nums",
+    },
+    cell: ({ row }) => (
+      <span className="inline-flex items-center gap-1.5">
+        {row.original.source !== "MANUAL" && (
+          <RefreshCw
+            className={`text-primary shrink-0 ${syncing ? "animate-spin" : "opacity-0"}`}
+            size={14}
+            strokeWidth={2.5}
+            style={{ animationDuration: "1s" }}
+          />
+        )}
+        {formatBalance(row.original.balance, row.original.currency)}
+      </span>
+    ),
+  }), [syncing]);
+
 
   const groupByValue = useMemo<((row: Account) => string) | undefined>(() => {
     if (groupBy === "none") return undefined;
@@ -261,6 +304,27 @@ export function AccountsContent() {
     };
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const { data: connectionsData } = await fetchBankConnections();
+      const connections = connectionsData?.bankConnections ?? [];
+      if (connections.length === 0) {
+        successToast("No connected banks to refresh");
+        return;
+      }
+      const results = await Promise.all(
+        connections.map((c) => syncTransactions({ variables: { bankConnectionId: c.id } }))
+      );
+      await refetch();
+      const totalAdded = results.reduce((sum, r) => sum + (r.data?.syncTransactions?.transactionsAdded ?? 0), 0);
+      const totalAccounts = results.reduce((sum, r) => sum + (r.data?.syncTransactions?.accountsSynced ?? 0), 0);
+      successToast(`Synced ${totalAccounts} ${totalAccounts === 1 ? "account" : "accounts"} · ${totalAdded} new ${totalAdded === 1 ? "transaction" : "transactions"}`);
+    } finally {
+      setSyncing(false);
+    }
+  }, [fetchBankConnections, syncTransactions, refetch]);
+
   const handleCreate = useCallback(async (payload: CreateAccountPayload | UpdateAccountPayload) => {
     await createAccount({ variables: { input: payload as CreateAccountInput } });
     await refetch();
@@ -276,6 +340,12 @@ export function AccountsContent() {
     });
     await refetch();
   }, [editAccount, updateAccount, refetch]);
+
+  const handleSyncAccount = useCallback(async () => {
+    if (!editAccount?.bankConnectionId) return;
+    await syncTransactions({ variables: { bankConnectionId: editAccount.bankConnectionId } });
+    await refetch();
+  }, [editAccount, syncTransactions, refetch]);
 
   const handleDelete = useCallback(async () => {
     if (!editAccount) return;
@@ -317,6 +387,12 @@ export function AccountsContent() {
                 options={GROUP_BY_OPTIONS}
                 testId="group-by-select"
               />
+              {hasAutoAccounts && (
+                <Button size="lg" variant="outline" onClick={handleRefresh} disabled={syncing} aria-label="Refresh bank connections">
+                  <RefreshCw className={`size-4 ${syncing ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              )}
               <Button size="lg" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="size-4" />
                 Add Account
@@ -327,7 +403,7 @@ export function AccountsContent() {
           <DataTable
             stickyHeader
             loading={loading}
-            columns={columns}
+            columns={[columns[0], balanceColumn, ...columns.slice(1)]}
             data={accounts}
             groupByValue={groupByValue}
             groupSort={groupSort}
@@ -410,6 +486,7 @@ export function AccountsContent() {
         onOpenChange={setCreateDialogOpen}
         existingNames={accountNames}
         onSave={handleCreate}
+        onConnect={refetch}
       />
 
       <AccountDialog
@@ -419,6 +496,7 @@ export function AccountsContent() {
         existingNames={accountNames}
         onSave={handleUpdate}
         onDelete={handleDelete}
+        onSync={editAccount?.source !== "MANUAL" ? handleSyncAccount : undefined}
       />
     </div>
   );
