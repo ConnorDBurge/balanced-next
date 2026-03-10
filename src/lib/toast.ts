@@ -22,17 +22,17 @@ export function successToast(message: string) {
         "div",
         {
           className:
-            "relative overflow-hidden rounded-lg bg-emerald-900/80 border border-emerald-700/50 text-emerald-100 px-4 py-3 shadow-lg flex items-start gap-2 min-w-[280px]",
+            "relative overflow-hidden rounded-lg bg-emerald-500 border border-emerald-400 text-white px-4 py-3 shadow-lg flex items-start gap-2 min-w-[280px]",
         },
-        createElement(CircleCheck, { className: "size-4 text-emerald-400 shrink-0 mt-0.5" }),
+        createElement(CircleCheck, { className: "size-4 text-white shrink-0 mt-0.5" }),
         createElement(
           "div",
           { className: "flex flex-col" },
           createElement("span", { className: "text-sm font-medium" }, message),
-          createElement("span", { className: "text-xs text-emerald-400/60" }, timestamp)
+          createElement("span", { className: "text-xs text-emerald-100" }, timestamp)
         ),
         createElement("div", {
-          className: "absolute bottom-0 left-0 h-1 bg-emerald-500/60 rounded-b-lg",
+          className: "absolute bottom-0 left-0 h-1 bg-emerald-300 rounded-b-lg",
           style: { animation: "toast-progress 5s linear forwards" },
         })
       ),

@@ -16,7 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <TooltipProvider>
           {children}
-          <Toaster position="bottom-right" />
+          <Toaster position="bottom-right" toastOptions={{ style: { zIndex: 40 } }} />
         </TooltipProvider>
       </ThemeProvider>
     </ApolloWrapper>

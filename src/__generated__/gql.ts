@@ -14,6 +14,10 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.AccountsDocument,
+    "\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.CreateAccountDocument,
+    "\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": typeof types.UpdateAccountDocument,
+    "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n": typeof types.DeleteAccountDocument,
     "\n  query Self {\n    self {\n      id\n      email\n      givenName\n      familyName\n    }\n  }\n": typeof types.SelfDocument,
     "\n  query Workspaces {\n    workspaces {\n      id\n      name\n      status\n    }\n  }\n": typeof types.WorkspacesDocument,
     "\n  query CurrentWorkspace {\n    currentWorkspace {\n      id\n      name\n    }\n  }\n": typeof types.CurrentWorkspaceDocument,
@@ -28,6 +32,10 @@ type Documents = {
     "\n  mutation SwitchWorkspace($input: SwitchWorkspaceInput!) {\n    switchWorkspace(input: $input) {\n      id\n      name\n      token\n    }\n  }\n": typeof types.SwitchWorkspaceDocument,
 };
 const documents: Documents = {
+    "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.AccountsDocument,
+    "\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.CreateAccountDocument,
+    "\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n": types.UpdateAccountDocument,
+    "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n": types.DeleteAccountDocument,
     "\n  query Self {\n    self {\n      id\n      email\n      givenName\n      familyName\n    }\n  }\n": types.SelfDocument,
     "\n  query Workspaces {\n    workspaces {\n      id\n      name\n      status\n    }\n  }\n": types.WorkspacesDocument,
     "\n  query CurrentWorkspace {\n    currentWorkspace {\n      id\n      name\n    }\n  }\n": types.CurrentWorkspaceDocument,
@@ -56,6 +64,22 @@ const documents: Documents = {
  */
 export function graphql(source: string): unknown;
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  query Accounts {\n    accounts {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAccount($input: CreateAccountInput!) {\n    createAccount(input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateAccount($accountId: ID!, $input: UpdateAccountInput!) {\n    updateAccount(accountId: $accountId, input: $input) {\n      id\n      name\n      type\n      subType\n      balance\n      balanceLastUpdated\n      currency\n      institutionName\n      source\n      status\n      startingBalance\n      closedAt\n      externalId\n      createdAt\n      updatedAt\n      workspaceId\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n"): (typeof documents)["\n  mutation DeleteAccount($accountId: ID!) {\n    deleteAccount(accountId: $accountId)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
